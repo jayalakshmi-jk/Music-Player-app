@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Spotify Mini Player</title>
+    <style>
+        * { 
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            transition: 0.3s;
+        }
+
+        /* THEMES */
+        body.dark {
+            background: #121212;
+            color: white;
+        }
+
+        body.light {
+            background: #f4f4f4;
+            color: black;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 10;
+        }
+
+        .theme-toggle button {
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* App */
+        .app {
+            display: flex;
+            justify-content: center;
+            padding-top: 20px;
+            padding-bottom: 120px;
+        }
+
+        .main {
+            width: 400px;
+            text-align: center;
+        }
+
+        /* Now Playing */
+        .now-playing {
+            background: #3c3c3ca1;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        body.light .now-playing {
+            background: white;
+        }
+
+        .now-playing img {
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        /* Song List */
+        .song-list {
+            margin-top: 20px;
+        }
+
+        .song-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .song-item img {
+            width: 50px;
+            border-radius: 6px;
+        }
+
+        .song-item:hover {
+            background: #282828;
+        }
+
+        body.light .song-item:hover {
+            background: #ddd;
+        }
+
+        /* Bottom Player */
+        .player {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 90px;
+            background: #181818;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        body.light .player {
+            background: #ddd;
+        }
+
+        .song-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .song-info img {
+            width: 50px;
+            border-radius: 6px;
+        }
+
+        .controls button {
+            font-size: 22px;
+            padding: 8px 12px;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+
+        .volume input {
+            width: 100px;
+        }
+
+        .play {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #b3b3b3;
+            margin-left: -99px;
+            font-size: 12px;
+        }
+
+        #song-play {
+            width: 350px;
+        }
+    </style>
+</head>
+
+<body class="dark">
+    <h1 style="text-align: center;padding-top: 1%;">My Music Player</h1>
+    <!-- Theme Toggle -->
+    <div class="theme-toggle">
+        <button onclick="toggleTheme()">🌙 / ☀️</button>
+    </div>
+
+    <div class="app">
+        <div class="main">
+
+            <!-- Now Playing -->
+            <div class="now-playing">
+                <img id="now-img">
+                <h2 id="now-name"></h2>
+                <p id="now-artist"></p>
+            </div>
+
+            <!-- Remaining Songs -->
+            <div class="song-list" id="songList"></div>
+
+        </div>
+    </div>
+
+    <!-- Bottom Player -->
+    <div class="player">
+        <div class="song-info">
+            <img id="song-img">
+            <div>
+                <p id="song-name"></p>
+                <small id="artist-name"></small>
+            </div>
+        </div>
+
+        <div class="play-controls">
+            <div class="play">
+                <span id="currentTime">0:00</span>
+                <input type="range" id="song-play" value="0">
+                <span id="duration">0:00</span>
+            </div>
+
+            <div class="controls">
+
+                <button onclick="prevSong()"><img src="skip-back.svg"></button>
+                <button id="playBtn" onclick="playPause()"><img src="play.svg" id="icon"> </button>
+
+                <button onclick="nextSong()"><img src="skip-forward.svg"> </button>
+                <audio id="audio"></audio>
+            </div>
+        </div>
+
+        <div class="volume">
+            🔊 <input type="range" min="0" max="1" step="0.01" value="1" oninput="audio.volume=this.value">
+        </div>
+    </div>
+
+    <script>
+        const songs = [
+            {
+                name: "Kannukulla",
+                artist: "Dude",
+                src: "kannukulla_song from dude.mp3",
+                img: "kannukulla_img.jpg"
+            },
+            {
+                name: "Singari",
+                artist: "Dude",
+                src: "Singari_song from Dude.mp3",
+                img: "singari_img.jpeg"
+            },
+            {
+                name: "Nallaru Po",
+                artist: "Sai Abhyankkar",
+                src: "Nallaru_Po_-_Sai_Abhyankkar.mp3",
+                img: "nallaru po_img.png"
+            },
+            {
+                name: "Vazhithunaiye",
+                artist: "Sai Abhyankkar",
+                src: "Vazhithunaiye.mp3",
+                img: "Vazhithunaiyae.jpg"
+            },
+            {
+                name: "Rise of dragon",
+                artist: "Anirudh Ravichander",
+                src: "Rise Of Dragon.mp3",
+                img: "Rise of dragon.jpg"
+            },
+            {
+                name: "Monica",
+                artist: "Anirudh Ravichander",
+                src: "Monica.mp3",
+                img: "Monica.jpeg"
+            },
+            {
+                name: "Powerhouse-Vibe-MassTamilan.dev",
+                artist: "Anirudh Ravichander",
+                src: "Powerhouse-Vibe-MassTamilan.dev.mp3",
+                img: "Powerhouse-Vibe-MassTamilan.dev.jpeg"
+            },
+            {
+                name: "Phone Na Hello",
+                artist: "Anirudh Ravichander",
+                src: "Phone Na Hello.mp3",
+                img: "Phone Na Hello.jpeg"
+            }
+        ];
+
+        let index = 0;
+        const audio = document.getElementById("audio");
+
+        const nowImg = document.getElementById("now-img");
+        const nowName = document.getElementById("now-name");
+        const nowArtist = document.getElementById("now-artist");
+
+        const songImg = document.getElementById("song-img");
+        const songName = document.getElementById("song-name");
+        const artistName = document.getElementById("artist-name");
+
+        const songList = document.getElementById("songList");
+
+        const progress = document.getElementById("song-play");
+        const currentTimeEl = document.getElementById("currentTime");
+        const durationEl = document.getElementById("duration");
+
+
+        let icon = document.getElementById("icon")
+
+
+        function setVolume(value) {
+            audio.volume = value;
+        }
+        function formatTime(time) {
+            const minutes = Math.floor(time / 60);
+            const seconds = Math.floor(time % 60);
+            return `${minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
+        }
+
+
+        function loadSong() {
+            const song = songs[index];
+            audio.src = song.src;
+
+            nowImg.src = song.img;
+            nowName.innerText = song.name;
+            nowArtist.innerText = song.artist;
+
+            songImg.src = song.img;
+            songName.innerText = song.name;
+            artistName.innerText = song.artist;
+
+            audio.onloadedmetadata = () => {
+                progress.max = audio.duration;
+                durationEl.innerText = formatTime(audio.duration);
+                progress.value = 0;
+                currentTimeEl.innerText = "0:00";
+            };
+            renderList();
+        }
+
+        audio.addEventListener("timeupdate", () => {
+            progress.value = audio.currentTime;
+            currentTimeEl.innerText = formatTime(audio.currentTime);
+        });
+
+        progress.addEventListener("input", () => {
+            audio.currentTime = progress.value;
+        });
+
+        function renderList() {
+            songList.innerHTML = "";
+            songs.forEach((song, i) => {
+                if (i !== index) {
+                    const div = document.createElement("div");
+                    div.className = "song-item";
+                    div.innerHTML = `
+                        <img src="${song.img}">
+                        <div>
+                            <p>${song.name}</p>
+                            <small>${song.artist}</small>
+                        </div>
+                    `;
+                    div.onclick = () => {
+                        index = i;
+                        loadSong();
+                        audio.play();
+                    };
+                    songList.appendChild(div);
+                }
+            });
+        }
+
+        function playPause() {
+            if (audio.paused) {
+                audio.play();
+                icon.src = "pause.svg";
+            } else {
+                audio.pause();
+                icon.src = "play.svg";
+            }
+        }
+
+        function nextSong() {
+            index = (index + 1) % songs.length;
+            loadSong();
+            audio.play();
+            icon.src = "pause.svg";
+        }
+
+        function prevSong() {
+            index = (index - 1 + songs.length) % songs.length;
+            loadSong();
+            audio.play();
+            icon.src = "pause.svg";
+
+        }
+        function toggleTheme() {
+            document.body.classList.toggle("dark");
+            document.body.classList.toggle("light");
+        }
+
+        loadSong();
+    </script>
+
+</body>
+
+</html>
