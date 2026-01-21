@@ -374,6 +374,9 @@
             document.body.classList.toggle("dark");
             document.body.classList.toggle("light");
         }
+        audio.addEventListener("ended", () => {
+            nextSong();
+        });
 
         loadSong();
     </script>
